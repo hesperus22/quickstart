@@ -1,0 +1,1 @@
+Quick start for Angular single-page webapp with socket.io.

@@ -7,33 +7,40 @@ var buffer = require('vinyl-buffer');
 var uglify = require('gulp-uglify');
 var sourcemaps = require('gulp-sourcemaps');
 var ngAnnotate = require('gulp-ng-annotate');
-var es6ify = require('es6ify');
+var to5ify = require('6to5-browserify');
 var server = require('gulp-express');
+var to5 = require('gulp-6to5');
 
 var getBundler =function() {
   watchify.args.debug = true;
   var bundler = watchify(browserify(watchify.args));
 
   bundler
-    .add(es6ify.runtime)
-    .transform(es6ify)
+    .transform(to5ify)
     .transform('brfs')
-    .require(require.resolve('./client/js/script.js'), { entry: true });
+    .add('./client/js/script.js');
     
   return bundler;
 }
 
-gulp.task('watch', function() {
+gulp.task('6to5server', function(){
+    gulp.src('*.js')
+    .pipe(to5())
+    .pipe(gulp.dest('dist'));
+});
+
+gulp.task('watch', ['6to5server'], function() {
    
   var runServer = function(){
     server.run({
-        file: 'server.js'
+        file: 'dist/server.js'
     });
   };
   
   runServer();
 
-  gulp.watch(['*.js'], [runServer]);
+  gulp.watch('dist/*.js', [runServer]);
+  gulp.watch('*.js', ['6to5server']);
 
   var bundler = getBundler();
 

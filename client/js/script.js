@@ -2,6 +2,7 @@ var angular = require('angular-bsfy');
 var inherits = require('inherits');
 var p = require('../../promises.js');
 var socket = require('./angular-socket.js');
+require('../../node_modules/regenerator/runtime.js');
 
 var app = angular
     .module('myApp', [socket.name])
