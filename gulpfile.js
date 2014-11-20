@@ -15,6 +15,7 @@ var server = require('gulp-express');
 var to5 = require('gulp-6to5');
 var del = require('del');
 var exorcist = require('exorcist');
+var mkdir = require('mkdirp');
 
 browserify
     .transform(to5ify)
@@ -46,6 +47,10 @@ gulp.task('run', ['copyClient', '6to5server'], function() {
     });
 });
 
+gulp.task('makedir', function(cb){
+    mkdir('dist/client/js', cb);
+});
+
 var createBundle = function (bundler){
     return function(){
         return bundler
@@ -59,9 +64,9 @@ var createBundle = function (bundler){
     }
 }
 
-gulp.task('bundle', createBundle(browserify));
+gulp.task('bundle', ['makedir'], createBundle(browserify));
 
-gulp.task('watch', ['run'], function() {
+gulp.task('watch', ['makedir', 'run'], function() {
    
   gulp.watch('dist/*.js', ['run']);
   gulp.watch('src/*.js', ['6to5server']);
