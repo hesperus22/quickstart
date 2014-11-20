@@ -3,7 +3,8 @@ var gutil = require('gulp-util');
 var concat = require('gulp-concat');
 var source = require('vinyl-source-stream');
 var watchify = require('watchify');
-var browserify = require('browserify');
+watchify.args.debug = true;
+var browserify = require('browserify')(watchify.args);
 var buffer = require('vinyl-buffer');
 var transform = require('vinyl-transform');
 var uglify = require('gulp-uglify');
@@ -15,17 +16,10 @@ var to5 = require('gulp-6to5');
 var del = require('del');
 var exorcist = require('exorcist');
 
-var getBundler =function() {
-  watchify.args.debug = true;
-  var bundler = watchify(browserify(watchify.args));
-
-  bundler
+browserify
     .transform(to5ify)
     .transform('brfs')
     .add('./src/client/js/script.js');
-    
-  return bundler;
-}
 
 gulp.task('6to5server', function(){
     return gulp.src('src/*.js')
@@ -40,41 +34,43 @@ gulp.task('clean', function(cb){
     });
 });
 
+var copyClientSrc = ['src/client/*', '!src/client/js'];
 gulp.task('copyClient', function(){
-    return gulp.src(['src/client/*', '!src/client/js'])
+    return gulp.src(copyClientSrc)
         .pipe(gulp.dest('dist/client'));
 });
 
-gulp.task('watch', ['6to5server'], function() {
-   
-  var runServer = function(){
+gulp.task('run', ['copyClient', '6to5server'], function() {
     server.run({
         file: 'dist/server.js'
     });
-  };
-  
-  runServer();
+});
 
-  gulp.watch('dist/*.js', [runServer]);
+var createBundle = function (bundler){
+    return function(){
+        return bundler
+            .bundle()
+            .on('error', gutil.log.bind(gutil, 'Browserify Error'))
+            .pipe(exorcist('./dist/client/js/bundle.js.map'))
+            .pipe(source('bundle.js'))
+            .pipe(buffer())
+            .pipe(ngAnnotate())
+            .pipe(gulp.dest('./dist/client/js/')); 
+    }
+}
+
+gulp.task('bundle', createBundle(browserify));
+
+gulp.task('watch', ['run'], function() {
+   
+  gulp.watch('dist/*.js', ['run']);
   gulp.watch('src/*.js', ['6to5server']);
-  gulp.watch('./dist/client/js/bundle.js', ['stripMap']);
+  gulp.watch(copyClientSrc, ['copyClient']);
 
-  var bundler = getBundler();
+  var bundler = watchify(browserify)
+  var bundle = createBundle(bundler);
+ 
+  bundler.on('update', bundle);
 
-  bundler.on('update', rebundle);
-
-  function rebundle() {
-    return bundler.bundle()
-      .on('error', gutil.log.bind(gutil, 'Browserify Error'))
-      .pipe(source('bundle.js'))
-      .pipe(buffer())
-      .pipe(sourcemaps.init({loadMaps: true, debug: true}))
-        .pipe(ngAnnotate())
-        //.pipe(uglify())
-      .pipe(sourcemaps.write())
-      .pipe(transform(function(){return exorcist('./dist/client/js/bundle.js.map')}))
-      .pipe(gulp.dest('./dist/client/js/'))
-  }
-
-  return rebundle();
+  return bundle();
 });

@@ -21,7 +21,7 @@ app.controller('Ctrl', ($scope, mySocket) => {
     
     $scope.next = p.spawnf(function*(){
             while(true){
-                yield p.delay(1000);
+                yield p.delay(2000);
                 $scope.$apply(()=>{
                     $scope.counter = gen.next().value;
                 });
