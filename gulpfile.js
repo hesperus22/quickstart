@@ -1,15 +1,19 @@
 var gulp = require('gulp');
 var gutil = require('gulp-util');
+var concat = require('gulp-concat');
 var source = require('vinyl-source-stream');
 var watchify = require('watchify');
 var browserify = require('browserify');
 var buffer = require('vinyl-buffer');
+var transform = require('vinyl-transform');
 var uglify = require('gulp-uglify');
 var sourcemaps = require('gulp-sourcemaps');
 var ngAnnotate = require('gulp-ng-annotate');
 var to5ify = require('6to5-browserify');
 var server = require('gulp-express');
 var to5 = require('gulp-6to5');
+var del = require('del');
+var exorcist = require('exorcist');
 
 var getBundler =function() {
   watchify.args.debug = true;
@@ -18,15 +22,27 @@ var getBundler =function() {
   bundler
     .transform(to5ify)
     .transform('brfs')
-    .add('./client/js/script.js');
+    .add('./src/client/js/script.js');
     
   return bundler;
 }
 
 gulp.task('6to5server', function(){
-    gulp.src('*.js')
-    .pipe(to5())
-    .pipe(gulp.dest('dist'));
+    return gulp.src('src/*.js')
+            .pipe(to5())
+            .pipe(gulp.dest('dist'));
+});
+
+gulp.task('clean', function(cb){
+    del(['./dist/*'], function(err){
+        console.log(err);
+        cb(err);
+    });
+});
+
+gulp.task('copyClient', function(){
+    return gulp.src(['src/client/*', '!src/client/js'])
+        .pipe(gulp.dest('dist/client'));
 });
 
 gulp.task('watch', ['6to5server'], function() {
@@ -40,12 +56,12 @@ gulp.task('watch', ['6to5server'], function() {
   runServer();
 
   gulp.watch('dist/*.js', [runServer]);
-  gulp.watch('*.js', ['6to5server']);
+  gulp.watch('src/*.js', ['6to5server']);
+  gulp.watch('./dist/client/js/bundle.js', ['stripMap']);
 
   var bundler = getBundler();
 
   bundler.on('update', rebundle);
-  bundler.on('bundle', function(){console.log('Bundle');});
 
   function rebundle() {
     return bundler.bundle()
@@ -56,7 +72,8 @@ gulp.task('watch', ['6to5server'], function() {
         .pipe(ngAnnotate())
         //.pipe(uglify())
       .pipe(sourcemaps.write())
-      .pipe(gulp.dest('./client/js/'));
+      .pipe(transform(function(){return exorcist('./dist/client/js/bundle.js.map')}))
+      .pipe(gulp.dest('./dist/client/js/'))
   }
 
   return rebundle();
