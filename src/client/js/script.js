@@ -1,4 +1,5 @@
 var angular = require('angular-bsfy');
+var bootstrap = require('../../3rd/bootstrap.js'); 
 var inherits = require('inherits');
 var p = require('../../promises.js');
 var socket = require('./angular-socket.js');
@@ -8,7 +9,7 @@ var delay = p.delay;
 var spawn = p.spawnf;
 
 var app = angular
-    .module('myApp', [socket.name])
+    .module('myApp', [socket.name, bootstrap])
     .factory('mySocket', socketFactory=> socketFactory());
 
 app.controller('Ctrl', ($scope, mySocket) => {

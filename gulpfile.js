@@ -35,9 +35,9 @@ gulp.task('clean', function(cb){
     });
 });
 
-var copyClientSrc = ['src/client/*', '!src/client/js'];
+var copyClientSrc = ['src/client/**/*', '!src/client/js/**/*'];
 gulp.task('copyClient', function(){
-    return gulp.src(copyClientSrc)
+    return gulp.src(copyClientSrc, {base:"src/client"})
         .pipe(gulp.dest('dist/client'));
 });
 
@@ -76,6 +76,9 @@ gulp.task('watch', ['makedir', 'run'], function() {
   var bundle = createBundle(bundler);
  
   bundler.on('update', bundle);
+  bundler.on('bundle', function(){
+    console.log('Bundling...');
+  });
 
   return bundle();
 });
