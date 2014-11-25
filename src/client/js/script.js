@@ -1,9 +1,9 @@
 var angular = require('angular-bsfy');
 var bootstrap = require('../../3rd/bootstrap.js'); 
-var inherits = require('inherits');
 var p = require('../../promises.js');
 var socket = require('./angular-socket.js');
-require('../../../node_modules/regenerator/runtime.js');
+var log = require('../../log.js');
+require('regenerator/runtime.js');
 
 var delay = p.delay;
 var spawn = p.spawnf;
@@ -15,13 +15,15 @@ var app = angular
 app.controller('Ctrl', ($scope, mySocket) => {
     $scope.counter = 0;
     
-    var gen = function*(){
+    var gen = (function*(){
         var i = 0;
-        while(true)
-            yield ++i;
-    }();
+        while(true){
+            i += 1;
+            yield i;
+        }
+    })();
     
-    mySocket.on('test', msg=>console.log(msg));
+    mySocket.on('test', msg=>log.info(msg));
     
     $scope.next = spawn(function*(){
         while(true){

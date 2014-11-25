@@ -10,8 +10,12 @@ var promisify = function(fn, receiver) {
       var results = slice.call(arguments),
           error   = results.shift();
       
-      if (error) promise.reject(error);
-      else promise.resolve.apply(promise, results);
+      if (error) {
+        promise.reject(error);
+      }
+      else {
+        promise.resolve.apply(promise, results);
+      }
     });
     
     fn.apply(receiver, args);
@@ -20,7 +24,8 @@ var promisify = function(fn, receiver) {
 };
 
 var spawn = function(generator){
-     
+    let sequence = generator();
+ 
     var process = function(result){        
          
         result.value.then(function(value){
@@ -30,7 +35,6 @@ var spawn = function(generator){
         });
     };
  
-    let sequence = generator();
     let next = sequence.next();
     process(next);
 };

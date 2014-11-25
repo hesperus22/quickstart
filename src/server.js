@@ -3,14 +3,15 @@ var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
 var port = process.env.PORT || 3000;
+var log = require('./log.js');
 
 server.listen(port, ()=> {
-  console.log('Server listening at port %d', port);
+  log.info('Server listening at port', port);
 });
 
 app.use(express.static(__dirname + '/client'));
 
 io.on('connection', socket => {
-    console.log('Connected');
+    log.info('Connected');
     socket.emit('test', 'aaaa');
 });

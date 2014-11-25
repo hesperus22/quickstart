@@ -8,7 +8,6 @@ var browserify = require('browserify')(watchify.args);
 var buffer = require('vinyl-buffer');
 var transform = require('vinyl-transform');
 var uglify = require('gulp-uglify');
-var sourcemaps = require('gulp-sourcemaps');
 var ngAnnotate = require('gulp-ng-annotate');
 var to5ify = require('6to5-browserify');
 var server = require('gulp-express');
@@ -16,6 +15,18 @@ var to5 = require('gulp-6to5');
 var del = require('del');
 var exorcist = require('exorcist');
 var mkdir = require('mkdirp');
+var jshint = require('gulp-jshint');
+
+var packageJSON  = require('./package');
+var jshintConfig = packageJSON.jshintConfig;
+
+jshintConfig.lookup = false;
+
+gulp.task('jshint', function(){
+    return gulp.src('src/**/*.js')
+    .pipe(jshint(jshintConfig))
+    .pipe(jshint.reporter('jshint-stylish'));
+});
 
 browserify
     .transform(to5ify)
@@ -54,31 +65,31 @@ gulp.task('makedir', function(cb){
 var createBundle = function (bundler){
     return function(){
         return bundler
-            .bundle()
-            .on('error', gutil.log.bind(gutil, 'Browserify Error'))
-            .pipe(exorcist('./dist/client/js/bundle.js.map'))
-            .pipe(source('bundle.js'))
-            .pipe(buffer())
+        .bundle()
+        .on('error', gutil.log.bind(gutil, 'Browserify Error'))
+        .pipe(exorcist('./dist/client/js/bundle.js.map'))
+        .pipe(source('bundle.js'))
+        .pipe(buffer())
             .pipe(ngAnnotate())
-            .pipe(gulp.dest('./dist/client/js/')); 
+        .pipe(gulp.dest('./dist/client/js/'));
     }
 }
 
 gulp.task('bundle', ['makedir'], createBundle(browserify));
 
-gulp.task('watch', ['makedir', 'run'], function() {
-   
-  gulp.watch('dist/*.js', ['run']);
-  gulp.watch('src/*.js', ['6to5server']);
-  gulp.watch(copyClientSrc, ['copyClient']);
+gulp.task('watch', ['makedir', 'run'], function(cb) {
 
-  var bundler = watchify(browserify)
-  var bundle = createBundle(bundler);
- 
-  bundler.on('update', bundle);
-  bundler.on('bundle', function(){
-    console.log('Bundling...');
-  });
+    gulp.watch('dist/*.js', ['run']);
+    gulp.watch('src/*.js', ['6to5server']);
+    gulp.watch(copyClientSrc, ['copyClient']);
 
-  return bundle();
+    var bundler = watchify(browserify)
+    var bundle = createBundle(bundler);
+
+    bundler.on('update', bundle);
+    bundler.on('bundle', function(){
+        console.log('Bundling...');
+    });
+
+    bundle();
 });
