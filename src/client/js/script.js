@@ -1,5 +1,5 @@
 var angular = require('angular-bsfy');
-var bootstrap = require('../../3rd/bootstrap.js'); 
+var bootstrap = require('../../3rd/bootstrap.js');
 var p = require('../../promises.js');
 var socket = require('./angular-socket.js');
 var log = require('../../log.js');
@@ -14,7 +14,7 @@ var app = angular
 
 app.controller('Ctrl', ($scope, mySocket) => {
     $scope.counter = 0;
-    
+
     var gen = (function*(){
         var i = 0;
         while(true){
@@ -22,9 +22,9 @@ app.controller('Ctrl', ($scope, mySocket) => {
             yield i;
         }
     })();
-    
+
     mySocket.on('test', msg=>log.info(msg));
-    
+
     $scope.next = spawn(function*(){
         while(true){
             yield delay(2000);
@@ -33,4 +33,4 @@ app.controller('Ctrl', ($scope, mySocket) => {
             });
         }
     });
-}); 
+});
